@@ -17,9 +17,9 @@ flowchart TD
     Client -- Requisições API (REST) --> Server
     Server -- Lê/Escreve --> DB
 
-    style Client fill:#f9f,stroke:#fffff,stroke-width:2px
-    style Server fill:#fdf,stroke:#fffff,stroke-width:2px
-    style DB fill:#ccf,stroke:#fffff,stroke-width:2px
+     style Client fill:#d6bcfa,stroke:#4c1d95,stroke-width:2px,color:#000
+    style Server fill:#fbcfe8,stroke:#831843,stroke-width:2px,color:#000
+    style DB fill:#bfdbfe,stroke:#1e3a8a,stroke-width:2px,color:#000
 ```
 
 # Modelo de dados
@@ -163,6 +163,7 @@ CREATE TABLE faturas (
 A ideia aqui é separar as rotas por responsabilidade: criar componentes reautilizáveis tanto mais complexos quanto sem lógica e novos contextos a medida que for necessário para evitar prop drilling.
 
 # Definição da API
+
 
 
 
