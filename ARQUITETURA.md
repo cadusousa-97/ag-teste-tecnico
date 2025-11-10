@@ -17,9 +17,9 @@ flowchart TD
     Client -- Requisições API (REST) --> Server
     Server -- Lê/Escreve --> DB
 
-    style Client fill:#f9f,stroke:#333,stroke-width:2px
-    style Server fill:#fdf,stroke:#333,stroke-width:2px
-    style DB fill:#ccf,stroke:#333,stroke-width:2px
+    style Client fill:#f9f,stroke:##fffff,stroke-width:2px
+    style Server fill:#fdf,stroke:##fffff,stroke-width:2px
+    style DB fill:#ccf,stroke:##fffff,stroke-width:2px
 ```
 
 # Modelo de dados
@@ -34,6 +34,7 @@ flowchart TD
 
 -  Dito isso, apresento abaixo o modelo de dados com tabelas, campos e relacionamentos.
 
+```
 CREATE TYPE status_candidatura AS ENUM ('pendente', 'aprovada', 'rejeitada');
 CREATE TYPE status_indicacao AS ENUM ('enviada', 'em_andamento', 'fechada', 'rejeitada');
 CREATE TYPE status_fatura AS ENUM ('pendente', 'paga', 'vencida');
@@ -121,9 +122,10 @@ CREATE TABLE faturas (
     pago_em TIMESTAMP WITH TIME ZONE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
+```
 # Estrutura de Componentes (Frontend)
 
+```plaintext
 /client
 |
 +-- /src
@@ -150,14 +152,16 @@ CREATE TABLE faturas (
     |       └── DashboardMetrics.tsx   # Indicadores de performance
     |
     +-- /lib                   # Funções utilitárias
-    |   ├── api.ts             # Cliente central de API. Ex: funções pra fazer requisições e não repetir a lógica de fetch várias vezes
+    |   ├── api.ts             # Cliente central de API
     |   ├── hooks.ts           # Hooks customizados
     |   └── utils.ts           # Funções genéricas (formatação, datas, etc.)
     |
     +-- /contexts              # Estado global (React Context)
         └── AuthContext.tsx    # Gerencia o usuário logado e permissões
+```
 
 A ideia aqui é separar as rotas por responsabilidade: criar componentes reautilizáveis tanto mais complexos quanto sem lógica e novos contextos a medida que for necessário para evitar prop drilling.
 
 # Definição da API
+
 
