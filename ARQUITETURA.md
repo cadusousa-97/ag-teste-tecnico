@@ -1,6 +1,7 @@
 ﻿# ARQUITETURA DO PROJETO
 
 ## Diagrama da arquitetura
+
 ```mermaid
 flowchart TD
     subgraph "Cliente"
@@ -32,21 +33,16 @@ flowchart TD
 
   - Como escolhi implementar o módulo opcional B (Dashboard de performance), vi uma vantagem em utilizar o modelo relacional pois será primordial pois as relações entre entidades são nítidas e ocorrerão através de JOINs entre múltiplas tabelas e agregações com COUNT e SUM, a fim de gerar relatórios detalhados, por exemplo.
 
--  Dito isso, apresento abaixo o modelo de dados com tabelas, campos e relacionamentos.
+- Dito isso, apresento abaixo o modelo de dados com tabelas, campos e relacionamentos.
 
 ```
-CREATE TYPE status_candidatura AS ENUM ('pendente', 'aprovada', 'rejeitada');
-CREATE TYPE status_indicacao AS ENUM ('enviada', 'em_andamento', 'fechada', 'rejeitada');
-CREATE TYPE status_fatura AS ENUM ('pendente', 'paga', 'vencida');
-CREATE TYPE papel_usuario AS ENUM ('membro', 'admin');
-
-CREATE TABLE candidaturas (
+CREATE TABLE intencoes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     empresa VARCHAR(255),
     motivo TEXT,
-    status status_candidatura DEFAULT 'pendente',
+    status status_intencao DEFAULT 'pendente',
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -64,7 +60,7 @@ CREATE TABLE convites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
-    candidatura_id UUID REFERENCES candidaturas(id),
+    intencao_id UUID REFERENCES intencoes(id),
     expira_em TIMESTAMP WITH TIME ZONE NOT NULL,
     usado_em TIMESTAMP WITH TIME ZONE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -123,6 +119,7 @@ CREATE TABLE faturas (
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+
 # Estrutura de Componentes (Frontend)
 
 ```plaintext
@@ -163,7 +160,3 @@ CREATE TABLE faturas (
 A ideia aqui é separar as rotas por responsabilidade: criar componentes reautilizáveis tanto mais complexos quanto sem lógica e novos contextos a medida que for necessário para evitar prop drilling.
 
 # Definição da API
-
-
-
-

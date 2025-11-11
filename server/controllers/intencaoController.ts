@@ -5,6 +5,8 @@ import {
   criarIntencaoSchema,
 } from "../schemas/intencaoSchema";
 import { ZodError } from "zod";
+import { PoolClient } from "pg";
+import crypto from "crypto";
 
 export const criarIntencao = async (req: Request, res: Response) => {
   const { nome, email, empresa, motivo } = criarIntencaoSchema.parse(req.body);
@@ -37,7 +39,7 @@ export const criarIntencao = async (req: Request, res: Response) => {
 
 export const listarIntencoes = async (req: Request, res: Response) => {
   try {
-    const query = `SELECT * FROM intencoes ORDER BY created_at DESC;`;
+    const query = `SELECT * FROM intencoes ORDER BY criado_em DESC;`;
     const { rows } = await db.query(query);
     res.json(rows);
   } catch (err: any) {
@@ -54,28 +56,69 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
   }
 
   const { status } = atualizarStatusIntencaoSchema.parse(req.body);
-
+  const client: PoolClient = await db.connect();
   try {
-    const query = `
+    await client.query("BEGIN");
+
+    const intencaoQuery = `
       UPDATE intencoes
-      SET status = $1, updated_at = NOW()
-      WHERE id = $2
+      SET status = $1, atualizado_em = NOW()
+      WHERE id = $2 AND status = 'pendente'
       RETURNING *;
     `;
 
     const values = [status, id];
-    const { rows } = await db.query(query, values);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Intenção não encontrada." });
+    const intencaoResult = await client.query(intencaoQuery, values);
+
+    if (intencaoResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(404)
+        .json({ error: "Intenção não encontrada ou já processada." });
     }
+
+    const intencaoAprovada = intencaoResult.rows[0];
+    let conviteGerado = null;
 
     if (status === "aprovada") {
-      console.log(`Enviar email de aprovação para ${rows[0].email}`);
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiraEm = new Date();
+      expiraEm.setDate(expiraEm.getDate() + 7);
+
+      const conviteQuery = `
+      INSERT INTO convites (email, intencao_id, token, expira_em)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+
+      const conviteValues = [
+        intencaoAprovada.email,
+        intencaoAprovada.id,
+        token,
+        expiraEm,
+      ];
+
+      const conviteResult = await client.query(conviteQuery, conviteValues);
+
+      conviteGerado = conviteResult.rows[0];
+
+      console.log(`Convite gerado para: ${conviteGerado.email}`);
+      console.log(`Token: ${conviteGerado.token}`);
+      console.log(
+        `Link de Cadastro: http://localhost:3000/cadastro?token=${conviteGerado.token}`
+      );
     }
 
-    res.status(200).json({ message: `Intenção ${status} com sucesso.` });
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      intencao: intencaoAprovada,
+      convite: conviteGerado,
+    });
   } catch (err: any) {
+    await client.query("ROLLBACK");
+
     if (err instanceof ZodError) {
       return res.status(400).json({
         error: "Dados de entrada inválidos.",
@@ -86,7 +129,11 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
       });
     }
 
-    console.error("Erro ao atualizar status da intenção:", err);
-    res.status(500).json({ error: "Erro ao atualizar status da intenção." });
+    console.error("Erro na transação de atualização:", err);
+    res
+      .status(500)
+      .json({ error: "Erro interno do servidor.", details: err.message });
+  } finally {
+    client.release();
   }
 };
