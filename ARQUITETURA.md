@@ -36,6 +36,11 @@ flowchart TD
 - Dito isso, apresento abaixo o modelo de dados com tabelas, campos e relacionamentos.
 
 ```
+CREATE TYPE status_intencao AS ENUM ('pendente', 'aprovada', 'rejeitada');
+CREATE TYPE status_indicacao AS ENUM ('enviada', 'em_andamento', 'fechada', 'rejeitada');
+CREATE TYPE status_fatura AS ENUM ('pendente', 'paga', 'vencida');
+CREATE TYPE tipo_usuario AS ENUM ('membro', 'admin');
+
 CREATE TABLE intencoes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(255) NOT NULL,
@@ -43,7 +48,8 @@ CREATE TABLE intencoes (
     empresa VARCHAR(255),
     motivo TEXT,
     status status_intencao DEFAULT 'pendente',
-    criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE usuarios (
@@ -52,7 +58,8 @@ CREATE TABLE usuarios (
     email VARCHAR(255) NOT NULL UNIQUE,
     senha_hash VARCHAR(255) NOT NULL,
     empresa VARCHAR(255),
-    papel papel_usuario DEFAULT 'membro',
+    tipo tipo_usuario DEFAULT 'membro',
+    ativo BOOLEAN DEFAULT true,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

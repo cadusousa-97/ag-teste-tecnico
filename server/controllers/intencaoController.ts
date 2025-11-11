@@ -9,9 +9,11 @@ import { PoolClient } from "pg";
 import crypto from "crypto";
 
 export const criarIntencao = async (req: Request, res: Response) => {
-  const { nome, email, empresa, motivo } = criarIntencaoSchema.parse(req.body);
-
   try {
+    const { nome, email, empresa, motivo } = criarIntencaoSchema.parse(
+      req.body
+    );
+
     const query = `
       INSERT INTO intencoes (nome, email, empresa, motivo)
       VALUES ($1, $2, $3, $4)
@@ -21,7 +23,7 @@ export const criarIntencao = async (req: Request, res: Response) => {
     const values = [nome, email, empresa, motivo];
     const { rows } = await db.query(query, values);
 
-    res.status(201).json(rows[0]);
+    res.status(201).json({ success: true, data: rows[0] });
   } catch (err: any) {
     if (err instanceof ZodError) {
       return res.status(400).json({
@@ -33,7 +35,10 @@ export const criarIntencao = async (req: Request, res: Response) => {
       });
     }
     console.error("Erro ao criar intenção:", err);
-    res.status(500).json({ error: "Erro ao criar intenção." });
+    res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor.",
+    });
   }
 };
 
@@ -41,10 +46,12 @@ export const listarIntencoes = async (req: Request, res: Response) => {
   try {
     const query = `SELECT * FROM intencoes ORDER BY criado_em DESC;`;
     const { rows } = await db.query(query);
-    res.json(rows);
+    res.status(200).json({ success: true, data: rows });
   } catch (err: any) {
     console.error("Erro ao listar intenções:", err);
-    res.status(500).json({ error: "Erro ao listar intenções." });
+    res
+      .status(500)
+      .json({ success: false, error: "Erro interno do servidor." });
   }
 };
 
@@ -55,9 +62,13 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "ID da intenção é obrigatório." });
   }
 
-  const { status } = atualizarStatusIntencaoSchema.parse(req.body);
   const client: PoolClient = await db.connect();
+
   try {
+    const { id } = req.params;
+
+    const { status } = atualizarStatusIntencaoSchema.parse(req.body);
+
     await client.query("BEGIN");
 
     const intencaoQuery = `
@@ -72,10 +83,7 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
     const intencaoResult = await client.query(intencaoQuery, values);
 
     if (intencaoResult.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return res
-        .status(404)
-        .json({ error: "Intenção não encontrada ou já processada." });
+      throw new Error("Intenção não encontrada ou já processada.");
     }
 
     const intencaoAprovada = intencaoResult.rows[0];
@@ -113,14 +121,18 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
     await client.query("COMMIT");
 
     res.status(200).json({
-      intencao: intencaoAprovada,
-      convite: conviteGerado,
+      success: true,
+      data: {
+        intencao: intencaoAprovada,
+        convite: conviteGerado,
+      },
     });
   } catch (err: any) {
     await client.query("ROLLBACK");
 
     if (err instanceof ZodError) {
       return res.status(400).json({
+        success: false,
         error: "Dados de entrada inválidos.",
         details: err.issues.map((e) => ({
           campo: e.path.join("."),
@@ -129,10 +141,16 @@ export const atualizarStatusIntencao = async (req: Request, res: Response) => {
       });
     }
 
+    if (err.message === "Intenção não encontrada ou já processada.") {
+      return res.status(404).json({ success: false, error: err.message });
+    }
+
     console.error("Erro na transação de atualização:", err);
-    res
-      .status(500)
-      .json({ error: "Erro interno do servidor.", details: err.message });
+    res.status(500).json({
+      success: false,
+      error: "Erro interno do servidor.",
+      details: err.message,
+    });
   } finally {
     client.release();
   }

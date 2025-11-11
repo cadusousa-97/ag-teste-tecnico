@@ -21,6 +21,7 @@ CREATE TABLE usuarios (
     senha_hash VARCHAR(255) NOT NULL,
     empresa VARCHAR(255),
     tipo tipo_usuario DEFAULT 'membro',
+    ativo BOOLEAN DEFAULT true,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
