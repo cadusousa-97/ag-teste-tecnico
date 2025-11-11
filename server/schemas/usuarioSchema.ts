@@ -1,4 +1,3 @@
-// server/schemas/usuarioSchema.ts
 import { z } from "zod";
 
 export const registrarUsuarioSchema = z.object({

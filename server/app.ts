@@ -1,4 +1,3 @@
-// server/app.ts
 import express, { Application } from "express";
 import dotenv from "dotenv";
 

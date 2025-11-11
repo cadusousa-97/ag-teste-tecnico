@@ -1,4 +1,3 @@
-// server/schemas/conviteSchema.ts
 import { z } from "zod";
 
 export const verificarTokenSchema = z.object({
