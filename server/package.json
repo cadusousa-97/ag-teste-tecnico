@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon -L --watch '*.ts' --exec 'ts-node' index.ts"
+    "dev": "nodemon -L --watch '*.ts' --exec 'ts-node' index.ts",
+    "test": "dotenv -e .env.test -- jest --watchAll --maxWorkers=1"
   },
   "keywords": [],
   "author": "",
@@ -20,9 +21,15 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.5",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
     "@types/pg": "^8.15.6",
+    "@types/supertest": "^6.0.3",
+    "dotenv-cli": "^11.0.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.10",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

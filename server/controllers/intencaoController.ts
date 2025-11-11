@@ -15,8 +15,8 @@ export const criarIntencao = async (req: Request, res: Response) => {
     );
 
     const query = `
-      INSERT INTO intencoes (nome, email, empresa, motivo)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO intencoes (nome, email, empresa, motivo, status)
+      VALUES ($1, $2, $3, $4, 'pendente')
       RETURNING *;
     `;
 
@@ -27,6 +27,7 @@ export const criarIntencao = async (req: Request, res: Response) => {
   } catch (err: any) {
     if (err instanceof ZodError) {
       return res.status(400).json({
+        success: false,
         error: "Dados de entrada inválidos.",
         details: err.issues.map((e) => ({
           campo: e.path.join("."),
@@ -34,6 +35,14 @@ export const criarIntencao = async (req: Request, res: Response) => {
         })),
       });
     }
+
+    if (err.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        error: "Este email já foi submetido.",
+      });
+    }
+
     console.error("Erro ao criar intenção:", err);
     res.status(500).json({
       success: false,

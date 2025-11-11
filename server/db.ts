@@ -1,14 +1,11 @@
 import { Pool } from "pg";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: Number(process.env.DB_PORT || "5432"),
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: Number(process.env.PGPORT || "5432"),
 });
 
 export const query = (text: string, params?: unknown[]) =>
@@ -16,4 +13,6 @@ export const query = (text: string, params?: unknown[]) =>
 
 export const connect = () => pool.connect();
 
-export default { query, connect };
+export const end = () => pool.end();
+
+export default { query, connect, end };
