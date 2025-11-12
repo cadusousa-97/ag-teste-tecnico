@@ -134,36 +134,137 @@ CREATE TABLE faturas (
 |
 +-- /src
     |
-    +-- /app                   # Páginas e rotas (App Router)
-    |   |-- /admin             # Área administrativa (gerenciar candidaturas, membros)
-    |   |-- /dashboard         # Dashboard do membro (indicadores e métricas)
-    |   |-- /apply             # Formulário público de intenção de participação
-    |   |-- /register          # Formulário de cadastro via token de convite
-    |   |-- layout.tsx         # Layout raiz da aplicação
-    |   `-- page.tsx           # Página inicial (landing)
+    +-- /app                   # Páginas/Rotas (App Router)
+    |   |-- /admin             # (Page) Rota de admin (gatekeeper)
+    |   |-- /dashboard         # (Page) Rota de dashboard (gatekeeper)
+    |   |-- /apply             # (Page) Formulário público de intenção
+    |   |-- /register          # (Page) Formulário de cadastro com token
+    |   |-- layout.tsx         # Layout raiz (limpo)
+    |   `-- page.tsx           # Raiz (redireciona para /app/apply)
     |
     +-- /components            # Componentes React reutilizáveis
-    |   |-- /ui                # Componentes de interface
+    |   |-- /ui                # Componentes comuns (Shadcn)
     |   |   ├── Button.tsx
     |   |   ├── Input.tsx
     |   |   ├── Card.tsx
-    |   |   └── Modal.tsx
+    |   |   ├── Table.tsx
+    |   |   ├── Alert.tsx
+    |   |   └── ... (outros)
     |   |
-    |   |-- /features          # Componentes de domínio
-    |       ├── ApplicationList.tsx    # Listagem de candidaturas
-    |       ├── ReferralForm.tsx       # Formulário de indicações
-    |       ├── InvoiceTable.tsx       # Tabela de faturas
-    |       └── DashboardMetrics.tsx   # Indicadores de performance
+    |   `-- /features          # Componentes de domínio
+    |       ├── AccessDenied.tsx       # Tela de Acesso Negado
+    |       ├── AdminDashboard.tsx   # Tabela de candidaturas (com SWR)
+    |       ├── DashboardMetrics.tsx # Indicadores de performance (com SWR)
+    |       └── RegisterForm.tsx     # Formulário de cadastro
     |
-    +-- /lib                   # Funções utilitárias
-    |   ├── api.ts             # Cliente central de API
-    |   ├── hooks.ts           # Hooks customizados
-    |   └── utils.ts           # Funções genéricas (formatação, datas, etc.)
-    |
-    +-- /contexts              # Estado global (React Context)
-        └── AuthContext.tsx    # Gerencia o usuário logado e permissões
+    `-- /lib                   # Funções utilitárias
+        `-- api.ts             # Cliente 'fetch' (SWR)
 ```
 
-A ideia aqui é separar as rotas por responsabilidade: criar componentes reautilizáveis tanto mais complexos quanto sem lógica e novos contextos a medida que for necessário para evitar prop drilling.
+A ideia aqui é separar as as páginas por responsabilidade: criar componentes reautilizáveis tanto mais complexos, quanto comuns, aproveitando da estilização e de componentes "out of the box" providos pelo shadcn e centralizar nosso data fetching em api.ts utilizando SWR, evitando muito código boilerplate.
 
 # Definição da API
+
+A API foi construída em Node.js/Express com TypeScript e validação de schema usando Zod. Todas as respostas seguem um padrão para consumo facilitado no frontend:
+
+- Sucesso: { success: true, data: { ... } }
+
+- Erro: { success: false, error: "...", details?: [...] }
+
+Abaixo estão 3 endpoints principais que cobrem o Módulo Obrigatório.
+
+1. Criar Intenção de Participação
+
+```bash
+POST: /api/intencoes
+```
+
+Corpo (Request) (Validado com Zod):
+
+```json
+{
+  "nome": "string",
+  "email": "string (email)",
+  "empresa": "string (opcional)",
+  "motivo": "string (opcional)"
+}
+```
+
+Resposta (Sucesso 201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "nome": "Candidato de Teste",
+    "email": "candidato@email.com",
+    "status": "pendente",
+    "criado_em": "timestamp"
+  }
+}
+```
+
+2. Atualizar Status da Intenção (Admin)
+
+```bash
+PATCH: /api/intencoes/:id
+```
+
+Corpo (Request) (Validado com Zod):
+
+```json
+{
+  "status": "aprovada | rejeitada"
+}
+```
+
+Resposta (Sucesso 200 - Aprovada):
+
+```json
+{
+  "success": true,
+  "data": {
+    "intencao": {
+      "id": "uuid",
+      "status": "aprovada"
+    },
+    "convite": {
+      "id": "uuid",
+      "token": "string (64 chars)",
+      "expira_em": "timestamp"
+    }
+  }
+}
+```
+
+3. Registrar Usuário (Cadastro Completo)
+
+```bash
+POST: /api/usuarios/registrar
+```
+
+Corpo (Request) (Validado com Zod):
+
+```json
+{
+  "token": "string (64 chars)",
+  "nome": "string",
+  "senha": "string (min 8 chars)",
+  "empresa": "string (opcional)"
+}
+```
+
+Resposta (Sucesso 201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "nome": "Novo Membro",
+    "email": "candidato@email.com",
+    "empresa": "Empresa"
+  }
+}
+```

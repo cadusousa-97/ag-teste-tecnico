@@ -41,6 +41,8 @@ services:
     volumes:
       - ./client:/usr/src/app
       - /usr/src/app/node_modules
+    environment:
+      - ADMIN_SECRET=admin123
     depends_on:
       - server
     networks:
