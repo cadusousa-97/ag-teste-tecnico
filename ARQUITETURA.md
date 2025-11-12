@@ -161,7 +161,7 @@ CREATE TABLE faturas (
         `-- api.ts             # Cliente 'fetch' (SWR)
 ```
 
-A ideia aqui é separar as as páginas por responsabilidade: criar componentes reautilizáveis tanto mais complexos, quanto comuns, aproveitando da estilização e de componentes "out of the box" providos pelo shadcn e centralizar nosso data fetching em api.ts utilizando SWR, evitando muito código boilerplate.
+A ideia aqui é separar as páginas por responsabilidade: criar componentes reutilizáveis tanto mais complexos, quanto comuns, aproveitando da estilização e de componentes "out of the box" providos pelo shadcn e centralizar nosso data fetching em api.ts utilizando SWR, evitando muito código boilerplate.
 
 # Definição da API
 
